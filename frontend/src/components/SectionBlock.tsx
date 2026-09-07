@@ -8,6 +8,7 @@ interface SectionBlockProps {
   section: Section;
   links: Link[];
   editMode: boolean;
+  iconScale: number;
   onAddLink: (sectionId: string) => void;
   onEditLink: (link: Link) => void;
   onDeleteLink: (id: string) => void;
@@ -20,6 +21,7 @@ export default function SectionBlock({
   section,
   links,
   editMode,
+  iconScale,
   onAddLink,
   onEditLink,
   onDeleteLink,
@@ -180,6 +182,7 @@ export default function SectionBlock({
               key={link.id}
               link={link}
               editMode={editMode}
+              iconScale={iconScale}
               onEdit={onEditLink}
               onDelete={onDeleteLink}
             />

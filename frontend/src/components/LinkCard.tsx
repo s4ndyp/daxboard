@@ -5,6 +5,7 @@ import LinkIcon from "./LinkIcon";
 interface LinkCardProps {
   link: Link;
   editMode: boolean;
+  iconScale: number;
   onEdit: (link: Link) => void;
   onDelete: (id: string) => void;
 }
@@ -12,6 +13,7 @@ interface LinkCardProps {
 export default function LinkCard({
   link,
   editMode,
+  iconScale,
   onEdit,
   onDelete,
 }: LinkCardProps) {
@@ -40,6 +42,7 @@ export default function LinkCard({
             url={link.url}
             icon={link.icon}
             fill
+            scale={iconScale}
           />
         </div>
         <span className="line-clamp-1 w-full px-0.5 text-center text-[10px] font-medium leading-tight text-[var(--color-text)]">

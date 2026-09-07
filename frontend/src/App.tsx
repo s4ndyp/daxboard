@@ -13,6 +13,13 @@ import LinkModal from "./components/LinkModal";
 import AddSectionModal from "./components/AddSectionModal";
 import SectionBlock from "./components/SectionBlock";
 import pb from "./lib/pocketbase";
+import {
+  getIconScale,
+  ICON_SIZE_OPTIONS,
+  loadIconSize,
+  saveIconSize,
+  type IconSize,
+} from "./lib/iconSize";
 import type { Link, LinkFormData, Section, SectionFormData } from "./types";
 import { exportLinksToCsv } from "./utils";
 
@@ -26,6 +33,9 @@ export default function App() {
   const [showAddSection, setShowAddSection] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState<string>();
   const [editingLink, setEditingLink] = useState<Link>();
+  const [iconSize, setIconSize] = useState<IconSize>(() => loadIconSize());
+
+  const iconScale = getIconScale(iconSize);
 
   const fetchData = useCallback(async () => {
     setError("");
@@ -125,6 +135,11 @@ export default function App() {
     exportLinksToCsv(links, sections);
   };
 
+  const handleIconSizeChange = (value: IconSize) => {
+    setIconSize(value);
+    saveIconSize(value);
+  };
+
   const handleDeleteLink = async (id: string) => {
     if (!confirm("Weet je zeker dat je deze link wilt verwijderen?")) return;
     await pb.collection("links").delete(id);
@@ -198,6 +213,23 @@ export default function App() {
             >
               <RefreshCw className="h-4 w-4" />
             </button>
+            {editMode && (
+              <select
+                value={iconSize}
+                onChange={(e) =>
+                  handleIconSizeChange(e.target.value as IconSize)
+                }
+                className="max-w-[6.5rem] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-2.5 text-xs text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-accent)] sm:max-w-none sm:px-3 sm:text-sm"
+                aria-label="Icoongrootte"
+                title="Icoongrootte"
+              >
+                {ICON_SIZE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               type="button"
               onClick={() => setEditMode((v) => !v)}
@@ -261,6 +293,7 @@ export default function App() {
                 section={section}
                 links={linksBySection.get(section.id) ?? []}
                 editMode={editMode}
+                iconScale={iconScale}
                 onAddLink={openAddLink}
                 onEditLink={openEditLink}
                 onDeleteLink={handleDeleteLink}
