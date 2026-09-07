@@ -1,4 +1,4 @@
-import { getFaviconUrl, getInitial, isEmoji } from "../utils";
+import { getFaviconUrl, getInitial, isEmoji, isImageUrl } from "../utils";
 
 interface LinkIconProps {
   title: string;
@@ -26,10 +26,22 @@ export default function LinkIcon({
     return <div className={className}>{icon}</div>;
   }
 
-  if (icon && (icon.startsWith("http://") || icon.startsWith("https://"))) {
+  if (icon && isImageUrl(icon)) {
     return (
       <div className={className}>
-        <img src={icon} alt="" className="h-full w-full object-cover" />
+        <img
+          src={icon}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            const target = e.currentTarget;
+            target.style.display = "none";
+            const parent = target.parentElement;
+            if (parent) {
+              parent.innerHTML = `<span class="font-semibold text-[var(--color-accent)]">${getInitial(title)}</span>`;
+            }
+          }}
+        />
       </div>
     );
   }
