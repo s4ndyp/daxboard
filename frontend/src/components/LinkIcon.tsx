@@ -41,7 +41,7 @@ export default function LinkIcon({
 }: LinkIconProps) {
   const clampedScale = Math.min(Math.max(scale, 0.4), 0.95);
 
-  const fixedClassName = `${sizeClasses[size]} flex shrink-0 items-center justify-center rounded-lg bg-[var(--color-surface-overlay)] ring-1 ring-[var(--color-border-muted)] overflow-hidden aspect-square`;
+  const fixedClassName = `${sizeClasses[size]} flex shrink-0 items-center justify-center rounded-lg overflow-hidden aspect-square bg-transparent`;
 
   const renderFillContent = (content: ReactNode) => (
     <div className="flex h-full w-full items-center justify-center p-0.5">
