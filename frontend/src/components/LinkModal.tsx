@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Plus, Save, X } from "lucide-react";
 import type { Link, LinkFormData, Section } from "../types";
-import { normalizeUrl } from "../utils";
+import { isEmoji, isImageUrl, normalizeUrl, parseIconInput } from "../utils";
+import LinkIcon from "./LinkIcon";
 
 interface LinkModalProps {
   open: boolean;
@@ -67,7 +68,7 @@ export default function LinkModal({
         ...form,
         title: form.title.trim(),
         url: normalizeUrl(form.url),
-        icon: form.icon.trim(),
+        icon: parseIconInput(form.icon),
       });
       onClose();
     } catch (err) {
@@ -76,6 +77,21 @@ export default function LinkModal({
       setLoading(false);
     }
   };
+
+  const handleIconChange = (value: string) => {
+    setForm({ ...form, icon: value });
+  };
+
+  const handleIconPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text");
+    const parsed = parseIconInput(pasted);
+    if (parsed !== pasted.trim()) {
+      e.preventDefault();
+      setForm({ ...form, icon: parsed });
+    }
+  };
+
+  const parsedIconPreview = parseIconInput(form.icon);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
@@ -146,15 +162,42 @@ export default function LinkModal({
 
           <div>
             <label className="mb-1.5 block text-sm text-[var(--color-text-muted)]">
-              Icoon <span className="text-xs">(emoji of URL, optioneel)</span>
+              Icoon{" "}
+              <span className="text-xs">
+                (emoji, URL of &lt;img src=&quot;...&quot;&gt; tag)
+              </span>
             </label>
             <input
               type="text"
               value={form.icon}
-              onChange={(e) => setForm({ ...form, icon: e.target.value })}
-              placeholder="🖥️"
+              onChange={(e) => handleIconChange(e.target.value)}
+              onPaste={handleIconPaste}
+              onBlur={() => {
+                const parsed = parseIconInput(form.icon);
+                if (parsed !== form.icon) {
+                  setForm({ ...form, icon: parsed });
+                }
+              }}
+              placeholder='http://10.1.2.206/uploads/... of <img src="..." />'
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--color-accent)]"
             />
+            {parsedIconPreview && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+                <span>Voorbeeld:</span>
+                {isImageUrl(parsedIconPreview) ? (
+                  <LinkIcon
+                    title={form.title || "Preview"}
+                    url={form.url}
+                    icon={parsedIconPreview}
+                    size="xs"
+                  />
+                ) : isEmoji(parsedIconPreview) ? (
+                  <span className="text-base">{parsedIconPreview}</span>
+                ) : (
+                  <span className="truncate">{parsedIconPreview}</span>
+                )}
+              </div>
+            )}
           </div>
 
           {error && (

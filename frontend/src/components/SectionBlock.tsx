@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { Link, Section } from "../types";
 import LinkCard from "./LinkCard";
@@ -10,6 +11,7 @@ interface SectionBlockProps {
   onEditLink: (link: Link) => void;
   onDeleteLink: (id: string) => void;
   onDeleteSection: (id: string) => void;
+  onRenameSection: (id: string, name: string) => Promise<void>;
 }
 
 export default function SectionBlock({
@@ -20,14 +22,61 @@ export default function SectionBlock({
   onEditLink,
   onDeleteLink,
   onDeleteSection,
+  onRenameSection,
 }: SectionBlockProps) {
+  const [name, setName] = useState(section.name);
+  const [savingName, setSavingName] = useState(false);
+
+  useEffect(() => {
+    setName(section.name);
+  }, [section.name]);
+
+  const commitRename = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setName(section.name);
+      return;
+    }
+    if (trimmed === section.name) return;
+
+    setSavingName(true);
+    try {
+      await onRenameSection(section.id, trimmed);
+    } catch {
+      setName(section.name);
+    } finally {
+      setSavingName(false);
+    }
+  };
+
   return (
     <section className="animate-fade-in rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface-raised)]/50 p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold tracking-tight sm:text-lg">
-          {section.name}
-        </h2>
-        <div className="flex items-center gap-2">
+        {editMode ? (
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => void commitRename()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
+              if (e.key === "Escape") {
+                setName(section.name);
+                e.currentTarget.blur();
+              }
+            }}
+            disabled={savingName}
+            className="min-w-0 flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-base font-semibold tracking-tight outline-none transition-colors focus:border-[var(--color-accent)] sm:text-lg"
+            aria-label="Sectienaam"
+          />
+        ) : (
+          <h2 className="min-w-0 flex-1 text-base font-semibold tracking-tight sm:text-lg">
+            {section.name}
+          </h2>
+        )}
+        <div className="flex shrink-0 items-center gap-2">
           {editMode && (
             <>
               <button
