@@ -4,22 +4,23 @@ interface LinkIconProps {
   title: string;
   url: string;
   icon?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }
 
 const sizeClasses = {
-  sm: "h-10 w-10 text-lg",
-  md: "h-14 w-14 text-2xl",
-  lg: "h-16 w-16 text-3xl",
+  xs: "h-7 w-7 text-sm",
+  sm: "h-9 w-9 text-base",
+  md: "h-11 w-11 text-xl",
+  lg: "h-14 w-14 text-2xl",
 };
 
 export default function LinkIcon({
   title,
   url,
   icon,
-  size = "md",
+  size = "sm",
 }: LinkIconProps) {
-  const className = `${sizeClasses[size]} flex shrink-0 items-center justify-center rounded-xl bg-[var(--color-surface-overlay)] ring-1 ring-[var(--color-border-muted)] overflow-hidden`;
+  const className = `${sizeClasses[size]} flex shrink-0 items-center justify-center rounded-lg bg-[var(--color-surface-overlay)] ring-1 ring-[var(--color-border-muted)] overflow-hidden aspect-square`;
 
   if (icon && isEmoji(icon)) {
     return <div className={className}>{icon}</div>;

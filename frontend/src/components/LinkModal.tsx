@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Plus, X } from "lucide-react";
-import type { LinkFormData, Section } from "../types";
+import { Plus, Save, X } from "lucide-react";
+import type { Link, LinkFormData, Section } from "../types";
 import { normalizeUrl } from "../utils";
 
-interface AddLinkModalProps {
+interface LinkModalProps {
   open: boolean;
   sections: Section[];
+  link?: Link;
   defaultSectionId?: string;
   onClose: () => void;
   onSubmit: (data: LinkFormData) => Promise<void>;
@@ -18,26 +19,37 @@ const emptyForm: LinkFormData = {
   section: "",
 };
 
-export default function AddLinkModal({
+export default function LinkModal({
   open,
   sections,
+  link,
   defaultSectionId,
   onClose,
   onSubmit,
-}: AddLinkModalProps) {
+}: LinkModalProps) {
+  const isEditing = Boolean(link);
   const [form, setForm] = useState<LinkFormData>(emptyForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) {
-      setForm({
-        ...emptyForm,
-        section: defaultSectionId || sections[0]?.id || "",
-      });
+      if (link) {
+        setForm({
+          title: link.title,
+          url: link.url,
+          icon: link.icon ?? "",
+          section: link.section,
+        });
+      } else {
+        setForm({
+          ...emptyForm,
+          section: defaultSectionId || sections[0]?.id || "",
+        });
+      }
       setError("");
     }
-  }, [open, defaultSectionId, sections]);
+  }, [open, link, defaultSectionId, sections]);
 
   if (!open) return null;
 
@@ -75,7 +87,9 @@ export default function AddLinkModal({
       />
       <div className="animate-fade-in relative w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-6 shadow-2xl">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Link toevoegen</h2>
+          <h2 className="text-lg font-semibold">
+            {isEditing ? "Link bewerken" : "Link toevoegen"}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -152,8 +166,17 @@ export default function AddLinkModal({
             disabled={loading}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-medium text-[var(--color-surface)] transition-colors hover:bg-[var(--color-accent-hover)] disabled:opacity-50"
           >
-            <Plus className="h-4 w-4" />
-            {loading ? "Opslaan..." : "Toevoegen"}
+            {isEditing ? (
+              <>
+                <Save className="h-4 w-4" />
+                {loading ? "Opslaan..." : "Opslaan"}
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" />
+                {loading ? "Opslaan..." : "Toevoegen"}
+              </>
+            )}
           </button>
         </form>
       </div>
