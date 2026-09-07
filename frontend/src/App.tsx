@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Download,
   LayoutDashboard,
   Loader2,
   Pencil,
@@ -13,6 +14,7 @@ import AddSectionModal from "./components/AddSectionModal";
 import SectionBlock from "./components/SectionBlock";
 import pb from "./lib/pocketbase";
 import type { Link, LinkFormData, Section, SectionFormData } from "./types";
+import { exportLinksToCsv } from "./utils";
 
 export default function App() {
   const [sections, setSections] = useState<Section[]>([]);
@@ -114,6 +116,15 @@ export default function App() {
     await fetchData();
   };
 
+  const handleUpdateSectionColor = async (id: string, color: string) => {
+    await pb.collection("sections").update(id, { color });
+    await fetchData();
+  };
+
+  const handleExportCsv = () => {
+    exportLinksToCsv(links, sections);
+  };
+
   const handleDeleteLink = async (id: string) => {
     if (!confirm("Weet je zeker dat je deze link wilt verwijderen?")) return;
     await pb.collection("links").delete(id);
@@ -169,6 +180,16 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={loading || links.length === 0}
+              className="rounded-xl border border-[var(--color-border)] p-2.5 text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Exporteer links naar CSV"
+              title="Exporteer naar CSV"
+            >
+              <Download className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={() => fetchData()}
@@ -245,6 +266,7 @@ export default function App() {
                 onDeleteLink={handleDeleteLink}
                 onDeleteSection={handleDeleteSection}
                 onRenameSection={handleRenameSection}
+                onUpdateSectionColor={handleUpdateSectionColor}
               />
             ))}
             {editMode && (
