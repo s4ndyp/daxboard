@@ -80,6 +80,18 @@ export default function SectionBlock({
 
   const sectionStyles = getSectionStyles(section.color);
 
+  const addLinkTile = (
+    <button
+      type="button"
+      onClick={() => onAddLink(section.id)}
+      className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-accent)]"
+      aria-label="Link toevoegen"
+    >
+      <span className="text-2xl leading-none">+</span>
+      <span className="text-[10px] font-medium">Toevoegen</span>
+    </button>
+  );
+
   return (
     <section
       className="animate-fade-in rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface-raised)]/50 p-4 sm:p-5"
@@ -157,24 +169,9 @@ export default function SectionBlock({
       </div>
 
       {links.length === 0 ? (
-        editMode ? (
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-2.5 md:grid-cols-6">
-            <button
-              type="button"
-              onClick={() => onAddLink(section.id)}
-              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-accent)]"
-            >
-              <span className="text-2xl leading-none">+</span>
-              <span className="text-[10px] font-medium">Toevoegen</span>
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] py-8 text-center">
-            <p className="text-sm text-[var(--color-text-muted)]">
-              Geen links in deze sectie
-            </p>
-          </div>
-        )
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-2.5 md:grid-cols-6">
+          {addLinkTile}
+        </div>
       ) : (
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-2.5 md:grid-cols-6">
           {links.map((link) => (
@@ -187,16 +184,7 @@ export default function SectionBlock({
               onDelete={onDeleteLink}
             />
           ))}
-          {editMode && (
-            <button
-              type="button"
-              onClick={() => onAddLink(section.id)}
-              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-accent)]"
-            >
-              <span className="text-2xl leading-none">+</span>
-              <span className="text-[10px] font-medium">Toevoegen</span>
-            </button>
-          )}
+          {addLinkTile}
         </div>
       )}
     </section>

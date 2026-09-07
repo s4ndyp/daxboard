@@ -309,7 +309,7 @@ export default function App() {
         )}
       </main>
 
-      {editMode && sections.length > 0 && (
+      {sections.length > 0 && (
         <button
           type="button"
           onClick={() => openAddLink()}
