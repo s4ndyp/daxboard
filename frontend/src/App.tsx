@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Server,
 } from "lucide-react";
+import AddSectionGhost from "./components/AddSectionGhost";
 import LinkModal from "./components/LinkModal";
 import AddSectionModal from "./components/AddSectionModal";
 import SectionBlock from "./components/SectionBlock";
@@ -108,6 +109,11 @@ export default function App() {
     await fetchData();
   };
 
+  const handleRenameSection = async (id: string, name: string) => {
+    await pb.collection("sections").update(id, { name });
+    await fetchData();
+  };
+
   const handleDeleteLink = async (id: string) => {
     if (!confirm("Weet je zeker dat je deze link wilt verwijderen?")) return;
     await pb.collection("links").delete(id);
@@ -174,27 +180,17 @@ export default function App() {
             <button
               type="button"
               onClick={() => setEditMode((v) => !v)}
-              className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex min-w-[7.5rem] items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
                 editMode
                   ? "border-[var(--color-accent)] bg-[var(--color-accent)]/15 text-[var(--color-accent)]"
                   : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-accent)]/40 hover:text-[var(--color-text)]"
               }`}
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">
                 {editMode ? "Klaar" : "Bewerken"}
               </span>
             </button>
-            {editMode && (
-              <button
-                type="button"
-                onClick={() => setShowAddSection(true)}
-                className="hidden items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-accent)] sm:flex"
-              >
-                <Plus className="h-4 w-4" />
-                Sectie
-              </button>
-            )}
           </div>
         </div>
       </header>
@@ -220,23 +216,20 @@ export default function App() {
               Opnieuw proberen
             </button>
           </div>
-        ) : sections.length === 0 ? (
+        ) : sections.length === 0 && !editMode ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] py-20 text-center">
             <LayoutDashboard className="mb-4 h-12 w-12 text-[var(--color-text-muted)]" />
             <h2 className="text-lg font-semibold">Nog geen secties</h2>
             <p className="mt-1 max-w-sm text-sm text-[var(--color-text-muted)]">
-              Voeg een sectie toe om je homelab servers te organiseren.
+              Schakel bewerkmodus in om je eerste sectie toe te voegen.
             </p>
             <button
               type="button"
-              onClick={() => {
-                setEditMode(true);
-                setShowAddSection(true);
-              }}
+              onClick={() => setEditMode(true)}
               className="mt-6 flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-5 py-2.5 text-sm font-medium text-[var(--color-surface)] transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              <Plus className="h-4 w-4" />
-              Eerste sectie toevoegen
+              <Pencil className="h-4 w-4" />
+              Bewerken
             </button>
           </div>
         ) : (
@@ -251,8 +244,12 @@ export default function App() {
                 onEditLink={openEditLink}
                 onDeleteLink={handleDeleteLink}
                 onDeleteSection={handleDeleteSection}
+                onRenameSection={handleRenameSection}
               />
             ))}
+            {editMode && (
+              <AddSectionGhost onClick={() => setShowAddSection(true)} />
+            )}
           </div>
         )}
       </main>
