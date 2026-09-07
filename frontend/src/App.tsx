@@ -6,7 +6,9 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  Search,
   Server,
+  X,
 } from "lucide-react";
 import AddSectionGhost from "./components/AddSectionGhost";
 import LinkModal from "./components/LinkModal";
@@ -34,8 +36,11 @@ export default function App() {
   const [activeSectionId, setActiveSectionId] = useState<string>();
   const [editingLink, setEditingLink] = useState<Link>();
   const [iconSize, setIconSize] = useState<IconSize>(() => loadIconSize());
+  const [searchQuery, setSearchQuery] = useState("");
 
   const iconScale = getIconScale(iconSize);
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const isSearching = normalizedSearch.length > 0;
 
   const fetchData = useCallback(async () => {
     setError("");
@@ -79,6 +84,31 @@ export default function App() {
     }
     return map;
   }, [sections, links]);
+
+  const filteredLinksBySection = useMemo(() => {
+    const map = new Map<string, Link[]>();
+    for (const section of sections) {
+      const sectionLinks = linksBySection.get(section.id) ?? [];
+      if (!isSearching) {
+        map.set(section.id, sectionLinks);
+        continue;
+      }
+      map.set(
+        section.id,
+        sectionLinks.filter((link) =>
+          link.title.toLowerCase().includes(normalizedSearch)
+        )
+      );
+    }
+    return map;
+  }, [sections, linksBySection, isSearching, normalizedSearch]);
+
+  const visibleSections = useMemo(() => {
+    if (!isSearching) return sections;
+    return sections.filter(
+      (section) => (filteredLinksBySection.get(section.id)?.length ?? 0) > 0
+    );
+  }, [sections, filteredLinksBySection, isSearching]);
 
   const handleSaveLink = async (data: LinkFormData) => {
     if (editingLink) {
@@ -179,76 +209,100 @@ export default function App() {
   return (
     <div className="min-h-dvh bg-[var(--color-surface)]">
       <header className="sticky top-0 z-40 border-b border-[var(--color-border-muted)] bg-[var(--color-surface)]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-accent)]/15 ring-1 ring-[var(--color-accent)]/25">
-              <LayoutDashboard className="h-5 w-5 text-[var(--color-accent)]" />
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-accent)]/15 ring-1 ring-[var(--color-accent)]/25">
+                <LayoutDashboard className="h-5 w-5 text-[var(--color-accent)]" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold tracking-tight sm:text-xl">
+                  DaxBoard
+                </h1>
+                <p className="hidden text-xs text-[var(--color-text-muted)] sm:block">
+                  Homelab LAN Dashboard
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight sm:text-xl">
-                DaxBoard
-              </h1>
-              <p className="hidden text-xs text-[var(--color-text-muted)] sm:block">
-                Homelab LAN Dashboard
-              </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={loading || links.length === 0}
+                className="rounded-xl border border-[var(--color-border)] p-2.5 text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Exporteer links naar CSV"
+                title="Exporteer naar CSV"
+              >
+                <Download className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => fetchData()}
+                className="rounded-xl border border-[var(--color-border)] p-2.5 text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-text)]"
+                aria-label="Vernieuwen"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+              {editMode && (
+                <select
+                  value={iconSize}
+                  onChange={(e) =>
+                    handleIconSizeChange(e.target.value as IconSize)
+                  }
+                  className="max-w-[6.5rem] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-2.5 text-xs text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-accent)] sm:max-w-none sm:px-3 sm:text-sm"
+                  aria-label="Icoongrootte"
+                  title="Icoongrootte"
+                >
+                  {ICON_SIZE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <button
+                type="button"
+                onClick={() => setEditMode((v) => !v)}
+                className={`flex min-w-[7.5rem] items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
+                  editMode
+                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/15 text-[var(--color-accent)]"
+                    : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-accent)]/40 hover:text-[var(--color-text)]"
+                }`}
+              >
+                <Pencil className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">
+                  {editMode ? "Klaar" : "Bewerken"}
+                </span>
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              disabled={loading || links.length === 0}
-              className="rounded-xl border border-[var(--color-border)] p-2.5 text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Exporteer links naar CSV"
-              title="Exporteer naar CSV"
-            >
-              <Download className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => fetchData()}
-              className="rounded-xl border border-[var(--color-border)] p-2.5 text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)]/40 hover:text-[var(--color-text)]"
-              aria-label="Vernieuwen"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-            {editMode && (
-              <select
-                value={iconSize}
-                onChange={(e) =>
-                  handleIconSizeChange(e.target.value as IconSize)
-                }
-                className="max-w-[6.5rem] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-2.5 text-xs text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-accent)] sm:max-w-none sm:px-3 sm:text-sm"
-                aria-label="Icoongrootte"
-                title="Icoongrootte"
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Zoek op titel..."
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pl-10 pr-10 text-sm outline-none transition-colors focus:border-[var(--color-accent)]"
+              aria-label="Zoek links op titel"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-overlay)] hover:text-[var(--color-text)]"
+                aria-label="Zoekopdracht wissen"
               >
-                {ICON_SIZE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                <X className="h-4 w-4" />
+              </button>
             )}
-            <button
-              type="button"
-              onClick={() => setEditMode((v) => !v)}
-              className={`flex min-w-[7.5rem] items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
-                editMode
-                  ? "border-[var(--color-accent)] bg-[var(--color-accent)]/15 text-[var(--color-accent)]"
-                  : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-accent)]/40 hover:text-[var(--color-text)]"
-              }`}
-            >
-              <Pencil className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">
-                {editMode ? "Klaar" : "Bewerken"}
-              </span>
-            </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 text-[var(--color-text-muted)]">
             <Loader2 className="mb-3 h-8 w-8 animate-spin text-[var(--color-accent)]" />
@@ -285,15 +339,24 @@ export default function App() {
               Bewerken
             </button>
           </div>
+        ) : isSearching && visibleSections.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] py-16 text-center">
+            <Search className="mb-3 h-10 w-10 text-[var(--color-text-muted)]" />
+            <h2 className="text-lg font-semibold">Geen resultaten</h2>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+              Geen links gevonden voor &quot;{searchQuery.trim()}&quot;
+            </p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
-            {sections.map((section) => (
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
+            {visibleSections.map((section) => (
               <SectionBlock
                 key={section.id}
                 section={section}
-                links={linksBySection.get(section.id) ?? []}
+                links={filteredLinksBySection.get(section.id) ?? []}
                 editMode={editMode}
                 iconScale={iconScale}
+                showAddLink={!isSearching}
                 onAddLink={openAddLink}
                 onEditLink={openEditLink}
                 onDeleteLink={handleDeleteLink}
