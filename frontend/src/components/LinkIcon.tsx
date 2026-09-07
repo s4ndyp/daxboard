@@ -5,6 +5,7 @@ interface LinkIconProps {
   url: string;
   icon?: string;
   size?: "xs" | "sm" | "md" | "lg";
+  fill?: boolean;
 }
 
 const sizeClasses = {
@@ -19,11 +20,16 @@ export default function LinkIcon({
   url,
   icon,
   size = "sm",
+  fill = false,
 }: LinkIconProps) {
-  const className = `${sizeClasses[size]} flex shrink-0 items-center justify-center rounded-lg bg-[var(--color-surface-overlay)] ring-1 ring-[var(--color-border-muted)] overflow-hidden aspect-square`;
+  const className = fill
+    ? "flex h-full w-full items-center justify-center overflow-hidden rounded-md"
+    : `${sizeClasses[size]} flex shrink-0 items-center justify-center rounded-lg bg-[var(--color-surface-overlay)] ring-1 ring-[var(--color-border-muted)] overflow-hidden aspect-square`;
 
   if (icon && isEmoji(icon)) {
-    return <div className={className}>{icon}</div>;
+    return (
+      <div className={`${className} ${fill ? "text-2xl" : ""}`}>{icon}</div>
+    );
   }
 
   if (icon && isImageUrl(icon)) {
@@ -53,7 +59,7 @@ export default function LinkIcon({
         <img
           src={favicon}
           alt=""
-          className="h-2/3 w-2/3 object-contain"
+          className={fill ? "h-full w-full object-contain p-0.5" : "h-2/3 w-2/3 object-contain"}
           onError={(e) => {
             const target = e.currentTarget;
             target.style.display = "none";
@@ -68,7 +74,9 @@ export default function LinkIcon({
   }
 
   return (
-    <div className={`${className} font-semibold text-[var(--color-accent)]`}>
+    <div
+      className={`${className} font-semibold text-[var(--color-accent)] ${fill ? "text-xl" : ""}`}
+    >
       {getInitial(title)}
     </div>
   );
