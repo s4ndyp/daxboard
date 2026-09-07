@@ -7,7 +7,7 @@ import {
   RefreshCw,
   Server,
 } from "lucide-react";
-import AddLinkModal from "./components/AddLinkModal";
+import LinkModal from "./components/LinkModal";
 import AddSectionModal from "./components/AddSectionModal";
 import SectionBlock from "./components/SectionBlock";
 import pb from "./lib/pocketbase";
@@ -19,9 +19,10 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editMode, setEditMode] = useState(false);
-  const [showAddLink, setShowAddLink] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
   const [showAddSection, setShowAddSection] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState<string>();
+  const [editingLink, setEditingLink] = useState<Link>();
 
   const fetchData = useCallback(async () => {
     setError("");
@@ -66,20 +67,29 @@ export default function App() {
     return map;
   }, [sections, links]);
 
-  const handleAddLink = async (data: LinkFormData) => {
-    const sectionLinks = links.filter((l) => l.section === data.section);
-    const maxOrder = sectionLinks.reduce(
-      (max, l) => Math.max(max, l.sort_order ?? 0),
-      0
-    );
+  const handleSaveLink = async (data: LinkFormData) => {
+    if (editingLink) {
+      await pb.collection("links").update(editingLink.id, {
+        title: data.title,
+        url: data.url,
+        icon: data.icon,
+        section: data.section,
+      });
+    } else {
+      const sectionLinks = links.filter((l) => l.section === data.section);
+      const maxOrder = sectionLinks.reduce(
+        (max, l) => Math.max(max, l.sort_order ?? 0),
+        0
+      );
 
-    await pb.collection("links").create({
-      title: data.title,
-      url: data.url,
-      icon: data.icon,
-      section: data.section,
-      sort_order: maxOrder + 1,
-    });
+      await pb.collection("links").create({
+        title: data.title,
+        url: data.url,
+        icon: data.icon,
+        section: data.section,
+        sort_order: maxOrder + 1,
+      });
+    }
 
     await fetchData();
   };
@@ -118,8 +128,20 @@ export default function App() {
   };
 
   const openAddLink = (sectionId?: string) => {
+    setEditingLink(undefined);
     setActiveSectionId(sectionId);
-    setShowAddLink(true);
+    setShowLinkModal(true);
+  };
+
+  const openEditLink = (link: Link) => {
+    setEditingLink(link);
+    setActiveSectionId(link.section);
+    setShowLinkModal(true);
+  };
+
+  const closeLinkModal = () => {
+    setShowLinkModal(false);
+    setEditingLink(undefined);
   };
 
   return (
@@ -218,7 +240,7 @@ export default function App() {
             </button>
           </div>
         ) : (
-          <div className="space-y-6 sm:space-y-8">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             {sections.map((section) => (
               <SectionBlock
                 key={section.id}
@@ -226,6 +248,7 @@ export default function App() {
                 links={linksBySection.get(section.id) ?? []}
                 editMode={editMode}
                 onAddLink={openAddLink}
+                onEditLink={openEditLink}
                 onDeleteLink={handleDeleteLink}
                 onDeleteSection={handleDeleteSection}
               />
@@ -245,12 +268,13 @@ export default function App() {
         </button>
       )}
 
-      <AddLinkModal
-        open={showAddLink}
+      <LinkModal
+        open={showLinkModal}
         sections={sections}
+        link={editingLink}
         defaultSectionId={activeSectionId}
-        onClose={() => setShowAddLink(false)}
-        onSubmit={handleAddLink}
+        onClose={closeLinkModal}
+        onSubmit={handleSaveLink}
       />
 
       <AddSectionModal
