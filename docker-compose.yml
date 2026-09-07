@@ -1,0 +1,15 @@
+services:
+  daxboard:
+    build:
+      context: .
+      args:
+        POCKETBASE_VERSION: "0.40.3"
+    container_name: daxboard
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - daxboard_data:/app/pb_data
+
+volumes:
+  daxboard_data:
