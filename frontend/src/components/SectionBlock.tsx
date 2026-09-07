@@ -9,6 +9,7 @@ interface SectionBlockProps {
   links: Link[];
   editMode: boolean;
   iconScale: number;
+  showAddLink: boolean;
   onAddLink: (sectionId: string) => void;
   onEditLink: (link: Link) => void;
   onDeleteLink: (id: string) => void;
@@ -22,6 +23,7 @@ export default function SectionBlock({
   links,
   editMode,
   iconScale,
+  showAddLink,
   onAddLink,
   onEditLink,
   onDeleteLink,
@@ -80,7 +82,7 @@ export default function SectionBlock({
 
   const sectionStyles = getSectionStyles(section.color);
 
-  const addLinkTile = (
+  const addLinkTile = showAddLink ? (
     <button
       type="button"
       onClick={() => onAddLink(section.id)}
@@ -90,14 +92,11 @@ export default function SectionBlock({
       <span className="text-2xl leading-none">+</span>
       <span className="text-[10px] font-medium">Toevoegen</span>
     </button>
-  );
+  ) : null;
 
   return (
-    <section
-      className="animate-fade-in rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface-raised)]/50 p-4 sm:p-5"
-      style={sectionStyles}
-    >
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="animate-fade-in flex flex-col">
+      <div className="mb-1.5 flex items-center justify-between gap-2 px-0.5">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {editMode ? (
             <input
@@ -115,11 +114,11 @@ export default function SectionBlock({
                 }
               }}
               disabled={savingName}
-              className="min-w-0 flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-base font-semibold tracking-tight outline-none transition-colors focus:border-[var(--color-accent)] sm:text-lg"
+              className="min-w-0 flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-0.5 text-sm font-semibold tracking-tight outline-none transition-colors focus:border-[var(--color-accent)] sm:text-base"
               aria-label="Sectienaam"
             />
           ) : (
-            <h2 className="min-w-0 flex-1 text-base font-semibold tracking-tight sm:text-lg">
+            <h2 className="min-w-0 flex-1 text-sm font-semibold tracking-tight sm:text-base">
               {section.name}
             </h2>
           )}
@@ -127,10 +126,10 @@ export default function SectionBlock({
           {editMode && (
             <div className="flex shrink-0 items-center gap-1">
               <label
-                className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
                 title="Sectiekleur kiezen"
               >
-                <Palette className="pointer-events-none h-3.5 w-3.5 text-[var(--color-text-muted)]" />
+                <Palette className="pointer-events-none h-3 w-3 text-[var(--color-text-muted)]" />
                 <input
                   type="color"
                   value={section.color || "#58a6ff"}
@@ -145,11 +144,11 @@ export default function SectionBlock({
                   type="button"
                   onClick={() => void handleClearColor()}
                   disabled={savingColor}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-danger)]/40 hover:text-[var(--color-danger)]"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-danger)]/40 hover:text-[var(--color-danger)]"
                   title="Kleur verwijderen"
                   aria-label="Kleur verwijderen"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-3 w-3" />
                 </button>
               )}
             </div>
@@ -160,33 +159,38 @@ export default function SectionBlock({
           <button
             type="button"
             onClick={() => onDeleteSection(section.id)}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--color-danger)]/30 px-2.5 py-1 text-xs font-medium text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/10"
+            className="flex shrink-0 items-center gap-1 rounded-lg border border-[var(--color-danger)]/30 px-2 py-0.5 text-xs font-medium text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/10"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-3 w-3" />
             Sectie
           </button>
         )}
       </div>
 
-      {links.length === 0 ? (
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-2.5 md:grid-cols-6">
-          {addLinkTile}
-        </div>
-      ) : (
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-2.5 md:grid-cols-6">
-          {links.map((link) => (
-            <LinkCard
-              key={link.id}
-              link={link}
-              editMode={editMode}
-              iconScale={iconScale}
-              onEdit={onEditLink}
-              onDelete={onDeleteLink}
-            />
-          ))}
-          {addLinkTile}
-        </div>
-      )}
-    </section>
+      <section
+        className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface-raised)]/50 p-2 sm:p-2.5"
+        style={sectionStyles}
+      >
+        {links.length === 0 && !showAddLink ? (
+          <div className="py-6 text-center text-sm text-[var(--color-text-muted)]">
+            Geen resultaten
+          </div>
+        ) : (
+          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 sm:gap-2 md:grid-cols-6">
+            {links.map((link) => (
+              <LinkCard
+                key={link.id}
+                link={link}
+                editMode={editMode}
+                iconScale={iconScale}
+                onEdit={onEditLink}
+                onDelete={onDeleteLink}
+              />
+            ))}
+            {addLinkTile}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
