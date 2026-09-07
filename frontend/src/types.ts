@@ -2,6 +2,7 @@ export interface Section {
   id: string;
   name: string;
   sort_order: number;
+  color?: string;
   created: string;
   updated: string;
 }
