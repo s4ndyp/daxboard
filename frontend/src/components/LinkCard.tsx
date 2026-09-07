@@ -5,6 +5,7 @@ import LinkIcon from "./LinkIcon";
 interface LinkCardProps {
   link: Link;
   editMode: boolean;
+  iconScale: number;
   onEdit: (link: Link) => void;
   onDelete: (id: string) => void;
 }
@@ -12,6 +13,7 @@ interface LinkCardProps {
 export default function LinkCard({
   link,
   editMode,
+  iconScale,
   onEdit,
   onDelete,
 }: LinkCardProps) {
@@ -28,18 +30,19 @@ export default function LinkCard({
       <button
         type="button"
         onClick={handleClick}
-        className={`flex h-full w-full flex-col items-stretch justify-end gap-0.5 rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface-raised)] p-1 transition-all duration-200 ${
+        className={`flex h-full w-full flex-col items-stretch justify-end gap-0.5 rounded-xl border border-[var(--color-border-muted)] bg-transparent p-1 transition-all duration-200 ${
           editMode
-            ? "cursor-pointer hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-surface-overlay)]"
-            : "cursor-pointer hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-surface-overlay)] hover:shadow-md hover:shadow-black/20 active:scale-[0.97]"
+            ? "cursor-pointer hover:border-[var(--color-accent)]/40 hover:bg-black/5"
+            : "cursor-pointer hover:border-[var(--color-accent)]/40 hover:bg-black/5 hover:shadow-md hover:shadow-black/10 active:scale-[0.97]"
         }`}
       >
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-md">
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-md bg-transparent">
           <LinkIcon
             title={link.title}
             url={link.url}
             icon={link.icon}
             fill
+            scale={iconScale}
           />
         </div>
         <span className="line-clamp-1 w-full px-0.5 text-center text-[10px] font-medium leading-tight text-[var(--color-text)]">
