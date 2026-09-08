@@ -13,22 +13,35 @@ interface LinkCardProps {
   onDelete: (id: string) => void;
 }
 
-function getStatusBorderClass(
-  status: LinkHealthStatus,
-  editMode: boolean
-): string {
-  if (editMode) {
-    return "border-[var(--color-border-muted)]";
+function StatusDot({ status }: { status: LinkHealthStatus }) {
+  if (status === "online") {
+    return (
+      <span
+        className="absolute bottom-1 left-1 h-1.5 w-1.5 rounded-full bg-[var(--color-success)]/55 ring-1 ring-[var(--color-success)]/20"
+        aria-hidden
+      />
+    );
   }
 
-  switch (status) {
-    case "online":
-      return "border-[var(--color-success)]/80";
-    case "offline":
-      return "border-[var(--color-danger)]/80";
-    default:
-      return "border-[var(--color-border-muted)]";
+  if (status === "offline") {
+    return (
+      <span
+        className="absolute bottom-1 left-1 h-1.5 w-1.5 rounded-full bg-[var(--color-danger)]/45 ring-1 ring-[var(--color-danger)]/15"
+        aria-hidden
+      />
+    );
   }
+
+  if (status === "checking") {
+    return (
+      <span
+        className="absolute bottom-1 left-1 h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-text-muted)]/35"
+        aria-hidden
+      />
+    );
+  }
+
+  return null;
 }
 
 export default function LinkCard({
@@ -63,17 +76,19 @@ export default function LinkCard({
     window.open(link.url, "_blank", "noopener,noreferrer");
   };
 
-  const borderClass = getStatusBorderClass(status, editMode);
+  const isOffline = !editMode && status === "offline";
 
   return (
     <div ref={rootRef} className="group relative aspect-square">
       <button
         type="button"
         onClick={handleClick}
-        className={`flex h-full w-full flex-col items-stretch justify-end gap-0.5 rounded-xl border bg-transparent p-1 transition-all duration-300 ${borderClass} ${
+        className={`relative flex h-full w-full flex-col items-stretch justify-end gap-0.5 rounded-xl border border-[var(--color-border-muted)] bg-transparent p-1 transition-all duration-300 ${
+          isOffline ? "opacity-75 saturate-75" : ""
+        } ${
           editMode
             ? "cursor-pointer hover:border-[var(--color-accent)]/40 hover:bg-black/5"
-            : "cursor-pointer hover:shadow-md hover:shadow-black/10 active:scale-[0.97]"
+            : "cursor-pointer hover:border-[var(--color-accent)]/30 hover:bg-black/5 hover:shadow-md hover:shadow-black/10 active:scale-[0.97]"
         }`}
         title={
           !editMode && status === "online"
@@ -83,6 +98,7 @@ export default function LinkCard({
               : undefined
         }
       >
+        {!editMode && <StatusDot status={status} />}
         <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-md bg-transparent">
           <LinkIcon
             title={link.title}
