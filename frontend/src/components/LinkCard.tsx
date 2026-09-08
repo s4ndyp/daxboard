@@ -1,4 +1,7 @@
+import { useEffect, useRef, useState } from "react";
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { useLinkStatus } from "../hooks/useLinkStatus";
+import type { LinkHealthStatus } from "../lib/linkHealth";
 import type { Link } from "../types";
 import LinkIcon from "./LinkIcon";
 
@@ -10,6 +13,24 @@ interface LinkCardProps {
   onDelete: (id: string) => void;
 }
 
+function getStatusBorderClass(
+  status: LinkHealthStatus,
+  editMode: boolean
+): string {
+  if (editMode) {
+    return "border-[var(--color-border-muted)]";
+  }
+
+  switch (status) {
+    case "online":
+      return "border-[var(--color-success)]/80";
+    case "offline":
+      return "border-[var(--color-danger)]/80";
+    default:
+      return "border-[var(--color-border-muted)]";
+  }
+}
+
 export default function LinkCard({
   link,
   editMode,
@@ -17,6 +38,23 @@ export default function LinkCard({
   onEdit,
   onDelete,
 }: LinkCardProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const status = useLinkStatus(link.url, visible);
+
+  useEffect(() => {
+    const element = rootRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { rootMargin: "120px" }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
   const handleClick = () => {
     if (editMode) {
       onEdit(link);
@@ -25,16 +63,25 @@ export default function LinkCard({
     window.open(link.url, "_blank", "noopener,noreferrer");
   };
 
+  const borderClass = getStatusBorderClass(status, editMode);
+
   return (
-    <div className="group relative aspect-square">
+    <div ref={rootRef} className="group relative aspect-square">
       <button
         type="button"
         onClick={handleClick}
-        className={`flex h-full w-full flex-col items-stretch justify-end gap-0.5 rounded-xl border border-[var(--color-border-muted)] bg-transparent p-1 transition-all duration-200 ${
+        className={`flex h-full w-full flex-col items-stretch justify-end gap-0.5 rounded-xl border bg-transparent p-1 transition-all duration-300 ${borderClass} ${
           editMode
             ? "cursor-pointer hover:border-[var(--color-accent)]/40 hover:bg-black/5"
-            : "cursor-pointer hover:border-[var(--color-accent)]/40 hover:bg-black/5 hover:shadow-md hover:shadow-black/10 active:scale-[0.97]"
+            : "cursor-pointer hover:shadow-md hover:shadow-black/10 active:scale-[0.97]"
         }`}
+        title={
+          !editMode && status === "online"
+            ? "Online"
+            : !editMode && status === "offline"
+              ? "Offline"
+              : undefined
+        }
       >
         <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-md bg-transparent">
           <LinkIcon
