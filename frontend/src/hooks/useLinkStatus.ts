@@ -1,36 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   linkHealth,
   type LinkHealthStatus,
 } from "../lib/linkHealth";
 
-export function useLinkStatus(url: string, visible: boolean): LinkHealthStatus {
+export function useLinkStatus(url: string): LinkHealthStatus {
   const [status, setStatus] = useState<LinkHealthStatus>("unknown");
 
-  useEffect(() => {
-    return linkHealth.subscribe(url, setStatus);
-  }, [url]);
-
-  useEffect(() => {
-    if (visible) {
-      linkHealth.requestCheck(url, "high");
-    }
-  }, [url, visible]);
+  useEffect(() => linkHealth.subscribe(url, setStatus), [url]);
 
   return status;
 }
 
 export function useLinkHealthBatch(urls: string[], enabled: boolean): void {
+  const hasCheckedRef = useRef(false);
+
   useEffect(() => {
-    if (!enabled || urls.length === 0) return;
+    if (!enabled || urls.length === 0 || hasCheckedRef.current) return;
 
-    linkHealth.checkMany(urls, "low");
-
-    const interval = window.setInterval(() => {
-      linkHealth.invalidate();
-      linkHealth.checkMany(urls, "low");
-    }, 60_000);
-
-    return () => window.clearInterval(interval);
+    hasCheckedRef.current = true;
+    linkHealth.checkMany(urls);
   }, [urls, enabled]);
 }

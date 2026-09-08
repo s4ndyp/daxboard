@@ -116,7 +116,7 @@ export default function App() {
     [links]
   );
 
-  useLinkHealthBatch(linkUrls, !loading);
+  useLinkHealthBatch(linkUrls, !loading && linkUrls.length > 0);
 
   const handleSaveLink = async (data: LinkFormData) => {
     if (editingLink) {

@@ -2,12 +2,6 @@ export type LinkHealthStatus = "unknown" | "checking" | "online" | "offline";
 
 type Listener = (status: LinkHealthStatus) => void;
 
-interface CacheEntry {
-  status: "online" | "offline";
-  expiresAt: number;
-}
-
-const CACHE_TTL_MS = 60_000;
 const CHECK_TIMEOUT_MS = 4_000;
 const MAX_CONCURRENT = 6;
 
@@ -35,7 +29,7 @@ async function probeUrl(url: string): Promise<boolean> {
 }
 
 class LinkHealthService {
-  private cache = new Map<string, CacheEntry>();
+  private cache = new Map<string, "online" | "offline">();
   private listeners = new Map<string, Set<Listener>>();
   private inFlight = new Map<string, Promise<void>>();
   private queue: string[] = [];
@@ -65,13 +59,18 @@ class LinkHealthService {
     };
   }
 
-  requestCheck(url: string, priority: "high" | "low" = "low"): void {
-    const key = normalizeUrl(url);
+  checkMany(urls: string[]): void {
+    const unique = [...new Set(urls.map(normalizeUrl).filter(Boolean))];
+    for (const url of unique) {
+      this.requestCheck(url);
+    }
+  }
+
+  private requestCheck(key: string): void {
     if (!key) return;
 
-    const cached = this.cache.get(key);
-    if (cached && cached.expiresAt > Date.now()) {
-      this.notify(key, cached.status);
+    if (this.cache.has(key)) {
+      this.notify(key, this.cache.get(key)!);
       return;
     }
 
@@ -81,43 +80,19 @@ class LinkHealthService {
     }
 
     if (this.queued.has(key)) {
-      if (priority === "high") {
-        this.queue = this.queue.filter((item) => item !== key);
-        this.queue.unshift(key);
-      }
       return;
     }
 
     this.queued.add(key);
-    if (priority === "high") {
-      this.queue.unshift(key);
-    } else {
-      this.queue.push(key);
-    }
-
+    this.queue.push(key);
     this.notify(key, "checking");
     this.pump();
   }
 
-  checkMany(urls: string[], priority: "high" | "low" = "low"): void {
-    const unique = [...new Set(urls.map(normalizeUrl).filter(Boolean))];
-    for (const url of unique) {
-      this.requestCheck(url, priority);
-    }
-  }
-
-  invalidate(url?: string): void {
-    if (url) {
-      this.cache.delete(normalizeUrl(url));
-      return;
-    }
-    this.cache.clear();
-  }
-
   private getStatus(key: string): LinkHealthStatus {
     const cached = this.cache.get(key);
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.status;
+    if (cached) {
+      return cached;
     }
     if (this.inFlight.has(key) || this.queued.has(key)) {
       return "checking";
@@ -136,9 +111,8 @@ class LinkHealthService {
 
       this.queued.delete(key);
 
-      const cached = this.cache.get(key);
-      if (cached && cached.expiresAt > Date.now()) {
-        this.notify(key, cached.status);
+      if (this.cache.has(key)) {
+        this.notify(key, this.cache.get(key)!);
         continue;
       }
 
@@ -161,11 +135,7 @@ class LinkHealthService {
     const online = await probeUrl(key);
     const status: "online" | "offline" = online ? "online" : "offline";
 
-    this.cache.set(key, {
-      status,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-    });
-
+    this.cache.set(key, status);
     this.notify(key, status);
   }
 }
