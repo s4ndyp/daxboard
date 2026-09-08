@@ -14,6 +14,7 @@ import AddSectionGhost from "./components/AddSectionGhost";
 import LinkModal from "./components/LinkModal";
 import AddSectionModal from "./components/AddSectionModal";
 import SectionBlock from "./components/SectionBlock";
+import { useLinkHealthBatch } from "./hooks/useLinkStatus";
 import pb from "./lib/pocketbase";
 import {
   getIconScale,
@@ -109,6 +110,13 @@ export default function App() {
       (section) => (filteredLinksBySection.get(section.id)?.length ?? 0) > 0
     );
   }, [sections, filteredLinksBySection, isSearching]);
+
+  const linkUrls = useMemo(
+    () => [...new Set(links.map((link) => link.url.trim()).filter(Boolean))],
+    [links]
+  );
+
+  useLinkHealthBatch(linkUrls, !loading);
 
   const handleSaveLink = async (data: LinkFormData) => {
     if (editingLink) {
